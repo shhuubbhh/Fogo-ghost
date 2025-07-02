@@ -3,18 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catch the Fogo Ghost</title>
+  <title>Catch The Fogo</title>
+  <script src="="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
+      height: 100%;
       font-family: sans-serif;
       background-color: #020617;
     }
     .layout {
       display: flex;
+      height: 100vh;
       width: 100%;
     }
     #instructions {
@@ -43,13 +45,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-right: 200px;
     }
     p {
-      margin-top: 10px;
       margin-bottom: 10px;
-      font-size: 25px;
       color: antiquewhite;
+      font-size: 30px;
     }
     #scoreContainer {
       display: flex;
@@ -58,7 +58,8 @@
       margin-bottom: 20px;
     }
     #score {
-      font-size: 1.2rem;
+       font-size: 1.2rem;
+      margin-bottom: 20px;
       color: antiquewhite;
     }
     #playerName {
@@ -76,7 +77,7 @@
     .berry {
       width: 40px;
       height: 40px;
-      background-image: url('fogo-pfp.png');
+      background-image: url('fogo.png');
       background-size: cover;
       position: absolute;
       cursor: pointer;
@@ -87,15 +88,13 @@
       padding: 10px 20px;
       font-size: 1rem;
       cursor: pointer;
-      color: antiquewhite;
       background-color: #fc2a00;
+      border-radius: 5px;
+      color: antiquewhite;
     }
     #leaderboard {
       margin-top: 20px;
-      margin-left: 220px;
       width: 300px;
-      color: antiquewhite;
-
     }
     #leaderboard h3 {
       margin-bottom: 5px;
@@ -110,19 +109,18 @@
     <div id="instructions">
       <h2>🎮 How to Play</h2>
       <ul>
-        <li>1. Enter your name in the box.</li>
-        <li>2. Click “Start Game” to begin.</li>
-        <li>3. fogo ghost will appear randomly in the green box.</li>
-        <li>4. Click a berry before it disappears to score.</li>
-        <li>5. Fogo ghost = 1 point</li>
-        <li>6. Jowe ghost = 5 points</li>
-        <li>7. Game lasts 30 seconds, fogo ghost get faster!</li>
-        <li>8. Top scores saved in leaderboard below.</li>
+        <li>Enter your name in the box.</li>
+        <li>Click “Start Game” to begin.</li>
+        <li>Click berries before they disappear to score.</li>
+        <li>Fogo ghost = 1 point</li>
+        <li>Jowe ghost = 5 points</li>
+        <li>Game lasts 30 seconds, ghost spawn faster!</li>
+        <li>Top 5 scores shown in leaderboard below.</li>
       </ul>
     </div>
 
     <div id="game-area">
-      <p>Catch the Fogo Ghost</p>
+      <p>Catch The Fogo</p>
       <div id="scoreContainer">
         <div id="score">Score: 0</div>
         <input type="text" id="playerName" placeholder="Enter your name" />
@@ -130,7 +128,7 @@
       <div id="gameBox"></div>
       <button id="startBtn">Start Game</button>
       <img src="fire-logo.webp" alt="Fire Logo"
-    class="fixed right-[-280px] top-1/2 transform -translate-y-1/2 max-w-[1000px] opacity-80 pointer-events-none z-0" />
+    class="fixed right-[-180px] top-1/2 transform -translate-y-1/2 max-w-[1000px] opacity-80 pointer-events-none z-0" />
       <div id="leaderboard">
         <h3>Leaderboard</h3>
         <ol id="leaderboardList"></ol>
@@ -139,11 +137,17 @@
   </div>
 
   <script>
+    // 🚨 Replace with your real Supabase project values:
+    const supabaseUrl = 'https://wgzjrtlvxhtajblchvhj.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnempydGx2eGh0YWpibGNodmhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzM1MTQsImV4cCI6MjA2NzA0OTUxNH0.nq9vM8R-OF2FtTkTKv-j7XO1xKwy4WtkcOpr-8TovG4';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
     const gameBox = document.getElementById('gameBox');
     const scoreDisplay = document.getElementById('score');
     const startBtn = document.getElementById('startBtn');
     const playerNameInput = document.getElementById('playerName');
     const leaderboardList = document.getElementById('leaderboardList');
+
     let score = 0;
     let spawnInterval = 800;
     let gameInterval;
@@ -151,7 +155,7 @@
 
     function spawnBerry() {
       const berry = document.createElement('div');
-      const isSpecial = Math.random() < 0.2; // 20% chance
+      const isSpecial = Math.random() < 0.2;
 
       berry.classList.add('berry');
       if (isSpecial) {
@@ -168,11 +172,7 @@
       berry.style.top = `${randomTop}px`;
 
       berry.addEventListener('click', () => {
-        if (berry.dataset.special === 'true') {
-          score += 5;
-        } else {
-          score += 1;
-        }
+        score += (berry.dataset.special === 'true') ? 5 : 1;
         scoreDisplay.textContent = `Score: ${score}`;
         gameBox.removeChild(berry);
       });
@@ -186,25 +186,28 @@
       }, isSpecial ? 800 : 1000);
     }
 
-    function updateLeaderboard(name, score) {
-      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-      leaderboard.push({ name, score });
-      leaderboard.sort((a, b) => b.score - a.score);
-      const topScores = leaderboard.slice(0, 5);
-      localStorage.setItem('leaderboard', JSON.stringify(topScores));
-
-      leaderboardList.innerHTML = '';
-      topScores.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        leaderboardList.appendChild(li);
-      });
+    async function updateLeaderboard(name, score) {
+      const { error } = await supabase
+        .from('leaderboard')
+        .insert([{ name, score }]);
+      if (error) console.error('Error saving score:', error);
+      loadLeaderboard();
     }
 
-    function loadLeaderboard() {
-      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+    async function loadLeaderboard() {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(5);
+
       leaderboardList.innerHTML = '';
-      leaderboard.forEach(entry => {
+      if (error) {
+        leaderboardList.innerHTML = '<li>Error loading leaderboard</li>';
+        return;
+      }
+
+      data.forEach(entry => {
         const li = document.createElement('li');
         li.textContent = `${entry.name}: ${entry.score}`;
         leaderboardList.appendChild(li);
