@@ -90,19 +90,6 @@
       color: antiquewhite;
       background-color: #fc2a00;
     }
-    #leaderboard {
-      margin-top: 20px;
-      margin-left: 220px;
-      width: 300px;
-      color: antiquewhite;
-
-    }
-    #leaderboard h3 {
-      margin-bottom: 5px;
-    }
-    #leaderboard ol {
-      padding-left: 20px;
-    }
   </style>
 </head>
 <body>
@@ -131,10 +118,6 @@
       <button id="startBtn">Start Game</button>
       <img src="fire-logo.webp" alt="Fire Logo"
     class="fixed right-[-280px] top-1/2 transform -translate-y-1/2 max-w-[1000px] opacity-80 pointer-events-none z-0" />
-      <div id="leaderboard">
-        <h3>Leaderboard</h3>
-        <ol id="leaderboardList"></ol>
-      </div>
     </div>
   </div>
 
@@ -184,32 +167,6 @@
           gameBox.removeChild(berry);
         }
       }, isSpecial ? 800 : 1000);
-    }
-
-    function updateLeaderboard(name, score) {
-      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-      leaderboard.push({ name, score });
-      leaderboard.sort((a, b) => b.score - a.score);
-      const topScores = leaderboard.slice(0, 5);
-      localStorage.setItem('leaderboard', JSON.stringify(topScores));
-
-      leaderboardList.innerHTML = '';
-      topScores.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        leaderboardList.appendChild(li);
-      });
-    }
-
-    function loadLeaderboard() {
-      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-      leaderboardList.innerHTML = '';
-      leaderboard.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name}: ${entry.score}`;
-        leaderboardList.appendChild(li);
-      });
-    }
 
     function startGame() {
       const playerName = playerNameInput.value.trim();
