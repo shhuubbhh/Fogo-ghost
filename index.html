@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catch the Fogo Ghost</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: sans-serif;
+      background-color: #020617;
+    }
+    .layout {
+      display: flex;
+      width: 100%;
+    }
+    #instructions {
+      width: 300px;
+      background: #ffffff;
+      padding: 20px;
+      margin-left: 40px;
+      align-self: center;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    #instructions h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+    }
+    #instructions ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+    #instructions li {
+      margin-bottom: 8px;
+    }
+    #game-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-right: 200px;
+    }
+    p {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 25px;
+      color: antiquewhite;
+    }
+    #scoreContainer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #score {
+      font-size: 1.2rem;
+      color: antiquewhite;
+    }
+    #playerName {
+      padding: 5px;
+      font-size: 1rem;
+    }
+    #gameBox {
+      width: 500px;
+      height: 500px;
+      background-color: #000000;
+      border: 2px solid #333;
+      position: relative;
+      overflow: hidden;
+    }
+    .berry {
+      width: 40px;
+      height: 40px;
+      background-image: url('fogo-pfp.png');
+      background-size: cover;
+      position: absolute;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+    #startBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: antiquewhite;
+      background-color: #fc2a00;
+    }
+    #leaderboard {
+      margin-top: 20px;
+      margin-left: 220px;
+      width: 300px;
+      color: antiquewhite;
+
+    }
+    #leaderboard h3 {
+      margin-bottom: 5px;
+    }
+    #leaderboard ol {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="instructions">
+      <h2>🎮 How to Play</h2>
+      <ul>
+        <li>1. Enter your name in the box.</li>
+        <li>2. Click “Start Game” to begin.</li>
+        <li>3. fogo ghost will appear randomly in the green box.</li>
+        <li>4. Click a berry before it disappears to score.</li>
+        <li>5. Fogo ghost = 1 point</li>
+        <li>6. Jowe ghost = 5 points</li>
+        <li>7. Game lasts 30 seconds, fogo ghost get faster!</li>
+        <li>8. Top scores saved in leaderboard below.</li>
+      </ul>
+    </div>
+
+    <div id="game-area">
+      <p>Catch the Fogo Ghost</p>
+      <div id="scoreContainer">
+        <div id="score">Score: 0</div>
+        <input type="text" id="playerName" placeholder="Enter your name" />
+      </div>
+      <div id="gameBox"></div>
+      <button id="startBtn">Start Game</button>
+      <img src="fire-logo.webp" alt="Fire Logo"
+    class="fixed right-[-280px] top-1/2 transform -translate-y-1/2 max-w-[1000px] opacity-80 pointer-events-none z-0" />
+      <div id="leaderboard">
+        <h3>Leaderboard</h3>
+        <ol id="leaderboardList"></ol>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const gameBox = document.getElementById('gameBox');
+    const scoreDisplay = document.getElementById('score');
+    const startBtn = document.getElementById('startBtn');
+    const playerNameInput = document.getElementById('playerName');
+    const leaderboardList = document.getElementById('leaderboardList');
+    let score = 0;
+    let spawnInterval = 800;
+    let gameInterval;
+    let intervalReducer;
+
+    function spawnBerry() {
+      const berry = document.createElement('div');
+      const isSpecial = Math.random() < 0.2; // 20% chance
+
+      berry.classList.add('berry');
+      if (isSpecial) {
+        berry.style.backgroundImage = "url('jowe.png')";
+        berry.dataset.special = 'true';
+      }
+
+      const maxLeft = gameBox.clientWidth - 40;
+      const maxTop = gameBox.clientHeight - 40;
+      const randomLeft = Math.floor(Math.random() * maxLeft);
+      const randomTop = Math.floor(Math.random() * maxTop);
+
+      berry.style.left = `${randomLeft}px`;
+      berry.style.top = `${randomTop}px`;
+
+      berry.addEventListener('click', () => {
+        if (berry.dataset.special === 'true') {
+          score += 5;
+        } else {
+          score += 1;
+        }
+        scoreDisplay.textContent = `Score: ${score}`;
+        gameBox.removeChild(berry);
+      });
+
+      gameBox.appendChild(berry);
+
+      setTimeout(() => {
+        if (gameBox.contains(berry)) {
+          gameBox.removeChild(berry);
+        }
+      }, isSpecial ? 800 : 1000);
+    }
+
+    function updateLeaderboard(name, score) {
+      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+      leaderboard.push({ name, score });
+      leaderboard.sort((a, b) => b.score - a.score);
+      const topScores = leaderboard.slice(0, 5);
+      localStorage.setItem('leaderboard', JSON.stringify(topScores));
+
+      leaderboardList.innerHTML = '';
+      topScores.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.score}`;
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    function loadLeaderboard() {
+      const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+      leaderboardList.innerHTML = '';
+      leaderboard.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.score}`;
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    function startGame() {
+      const playerName = playerNameInput.value.trim();
+      if (!playerName) {
+        alert('Please enter your name before starting.');
+        return;
+      }
+
+      score = 0;
+      spawnInterval = 800;
+      scoreDisplay.textContent = 'Score: 0';
+      clearInterval(gameInterval);
+      clearInterval(intervalReducer);
+
+      gameInterval = setInterval(spawnBerry, spawnInterval);
+
+      intervalReducer = setInterval(() => {
+        if (spawnInterval > 300) {
+          spawnInterval -= 50;
+          clearInterval(gameInterval);
+          gameInterval = setInterval(spawnBerry, spawnInterval);
+        }
+      }, 5000);
+
+      setTimeout(() => {
+        clearInterval(gameInterval);
+        clearInterval(intervalReducer);
+        alert(`Game Over, ${playerName}! Your Score: ${score}`);
+        updateLeaderboard(playerName, score);
+      }, 30000);
+    }
+
+    startBtn.addEventListener('click', startGame);
+    window.addEventListener('load', loadLeaderboard);
+  </script>
+</body>
+</html>
