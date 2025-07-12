@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catch the Fogo Ghost</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catch the Fogo Ghost</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
     body {
       margin: 0;
       padding: 0;
@@ -93,117 +94,151 @@
       background-color: #fc2a00;
       border-radius: 5px;
     }
+    .logo-container {
+  position: fixed;
+  top: 50%;
+  right: -280px;
+  transform: translateY(-50%);
+  max-width: 1000px;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.logo-img {
+  width: 100%;
+}
+
+/* 📱 On small screens: move logo below game area */
+@media (max-width: 768px) {
+  .logo-container {
+    position: static;
+    transform: none;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .logo-img {
+    max-width: 300px;
+    opacity: 0.8;
+  }
+}
+
   </style>
 </head>
+
 <body>
-  <div class="layout">
-    <div id="instructions">
-      <h2>🎮 How to Play</h2>
-      <ul>
-        <li>1. Enter your name in the box.</li>
-        <li>2. Click “Start Game” to begin.</li>
-        <li>3. fogo ghost will appear randomly in the green box.</li>
-        <li>4. Click the ghost before it disappears to score.</li>
-        <li>5. Fogo ghost = 1 point</li>
-        <li>6. Jowe ghost = 5 points</li>
-        <li>7. Game lasts 30 seconds, fogo ghost get faster!</li>
-      </ul>
+    <div class="layout">
+        <div id="instructions">
+            <h2>🎮 How to Play</h2>
+            <ul>
+                <li>1. Enter your name in the box.</li>
+                <li>2. Click “Start Game” to begin.</li>
+                <li>3. fogo ghost will appear randomly in the green box.</li>
+                <li>4. Click the ghost before it disappears to score.</li>
+                <li>5. Fogo ghost = 1 point</li>
+                <li>6. Jowe ghost = 5 points</li>
+                <li>7. Game lasts 30 seconds, fogo ghost get faster!</li>
+            </ul>
+        </div>
+
+        <div id="game-area">
+            <p>Catch the Fogo Ghost</p>
+            <div id="scoreContainer">
+                <div id="score">Score: 0</div>
+                <input type="text" id="playerName" placeholder="Enter your name" />
+                <button id="startBtn">Start Game</button>
+            </div>
+            <div id="gameBox"></div>
+            <div id="logo-container" class="logo-container">
+                <img src="fire-logo.webp" alt="Fire Logo" class="logo-img" />
+            </div>
+        </div>
     </div>
 
-    <div id="game-area">
-      <p>Catch the Fogo Ghost</p>
-      <div id="scoreContainer">
-        <div id="score">Score: 0</div>
-        <input type="text" id="playerName" placeholder="Enter your name" />
-        <button id="startBtn">Start Game</button>
-      </div>
-      <div id="gameBox"></div>
-      
-      <img src="fire-logo.webp" alt="Fire Logo"
-    class="fixed right-[-280px] top-1/2 transform -translate-y-1/2 max-w-[1000px] opacity-80 pointer-events-none z-0" />
-    </div>
-  </div>
+    <script>
+        const gameBox = document.getElementById('gameBox');
+        const scoreDisplay = document.getElementById('score');
+        const startBtn = document.getElementById('startBtn');
+        const playerNameInput = document.getElementById('playerName');
+        const leaderboardList = document.getElementById('leaderboardList');
+        let score = 0;
+        let spawnInterval = 800;
+        let gameInterval;
+        let intervalReducer;
 
-  <script>
-    const gameBox = document.getElementById('gameBox');
-    const scoreDisplay = document.getElementById('score');
-    const startBtn = document.getElementById('startBtn');
-    const playerNameInput = document.getElementById('playerName');
-    const leaderboardList = document.getElementById('leaderboardList');
-    let score = 0;
-    let spawnInterval = 800;
-    let gameInterval;
-    let intervalReducer;
+        function spawnBerry() {
+            const berry = document.createElement('div');
+            const isSpecial = Math.random() < 0.2; // 20% chance
 
-    function spawnBerry() {
-      const berry = document.createElement('div');
-      const isSpecial = Math.random() < 0.2; // 20% chance
+            berry.classList.add('berry');
+            if (isSpecial) {
+                berry.style.backgroundImage = "url('jowe.png')";
+                berry.dataset.special = 'true';
+            }
 
-      berry.classList.add('berry');
-      if (isSpecial) {
-        berry.style.backgroundImage = "url('jowe.png')";
-        berry.dataset.special = 'true';
-      }
+            const maxLeft = gameBox.clientWidth - 40;
+            const maxTop = gameBox.clientHeight - 40;
+            const randomLeft = Math.floor(Math.random() * maxLeft);
+            const randomTop = Math.floor(Math.random() * maxTop);
 
-      const maxLeft = gameBox.clientWidth - 40;
-      const maxTop = gameBox.clientHeight - 40;
-      const randomLeft = Math.floor(Math.random() * maxLeft);
-      const randomTop = Math.floor(Math.random() * maxTop);
+            berry.style.left = `${randomLeft}px`;
+            berry.style.top = `${randomTop}px`;
 
-      berry.style.left = `${randomLeft}px`;
-      berry.style.top = `${randomTop}px`;
+            berry.addEventListener('click', () => {
+                if (berry.dataset.special === 'true') {
+                    score += 5;
+                } else {
+                    score += 1;
+                }
+                scoreDisplay.textContent = `Score: ${score}`;
+                gameBox.removeChild(berry);
+            });
 
-      berry.addEventListener('click', () => {
-        if (berry.dataset.special === 'true') {
-          score += 5;
-        } else {
-          score += 1;
+            gameBox.appendChild(berry);
+
+            setTimeout(() => {
+                if (gameBox.contains(berry)) {
+                    gameBox.removeChild(berry);
+                }
+            }, isSpecial ? 800 : 1000);
         }
-        scoreDisplay.textContent = `Score: ${score}`;
-        gameBox.removeChild(berry);
-      });
+        function startGame() {
+            const playerName = playerNameInput.value.trim();
+            if (!playerName) {
+                alert('Please enter your name before starting.');
+                return;
+            }
 
-      gameBox.appendChild(berry);
+            score = 0;
+            spawnInterval = 800;
+            scoreDisplay.textContent = 'Score: 0';
+            clearInterval(gameInterval);
+            clearInterval(intervalReducer);
 
-      setTimeout(() => {
-        if (gameBox.contains(berry)) {
-          gameBox.removeChild(berry);
+            gameInterval = setInterval(spawnBerry, spawnInterval);
+
+            intervalReducer = setInterval(() => {
+                if (spawnInterval > 300) {
+                    spawnInterval -= 50;
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(spawnBerry, spawnInterval);
+                }
+            }, 5000);
+
+            setTimeout(() => {
+                clearInterval(gameInterval);
+                clearInterval(intervalReducer);
+                alert(`Game Over, ${playerName}! Your Score: ${score}`);
+                updateLeaderboard(playerName, score);
+            }, 30000);
         }
-      }, isSpecial ? 800 : 1000);
-    }
-    function startGame() {
-      const playerName = playerNameInput.value.trim();
-      if (!playerName) {
-        alert('Please enter your name before starting.');
-        return;
-      }
 
-      score = 0;
-      spawnInterval = 800;
-      scoreDisplay.textContent = 'Score: 0';
-      clearInterval(gameInterval);
-      clearInterval(intervalReducer);
-
-      gameInterval = setInterval(spawnBerry, spawnInterval);
-
-      intervalReducer = setInterval(() => {
-        if (spawnInterval > 300) {
-          spawnInterval -= 50;
-          clearInterval(gameInterval);
-          gameInterval = setInterval(spawnBerry, spawnInterval);
-        }
-      }, 5000);
-
-      setTimeout(() => {
-        clearInterval(gameInterval);
-        clearInterval(intervalReducer);
-        alert(`Game Over, ${playerName}! Your Score: ${score}`);
-        updateLeaderboard(playerName, score);
-      }, 30000);
-    }
-
-    startBtn.addEventListener('click', startGame);
-    window.addEventListener('load', loadLeaderboard);
-  </script>
+        startBtn.addEventListener('click', startGame);
+        window.addEventListener('load', loadLeaderboard);
+    </script>
 </body>
+
 </html>
